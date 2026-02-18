@@ -1,6 +1,6 @@
 {
   "name": "wabridge",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "WhatsApp HTTP Bridge - Send WhatsApp messages via API",
   "license": "MIT",
   "type": "module",

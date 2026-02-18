@@ -1,5 +1,4 @@
-import baileys from "baileys";
-const { default: makeWASocket, DisconnectReason, useMultiFileAuthState, makeCacheableSignalKeyStore, fetchLatestBaileysVersion } = baileys as any;
+import makeWASocket, { DisconnectReason, useMultiFileAuthState, makeCacheableSignalKeyStore, fetchLatestBaileysVersion } from "baileys";
 import { Boom } from "@hapi/boom";
 import pino from "pino";
 import path from "path";

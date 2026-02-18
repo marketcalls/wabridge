@@ -2,8 +2,6 @@
 
 A lightweight WhatsApp HTTP Bridge. Link your WhatsApp via CLI, then send messages through a simple REST API.
 
-Built on [Baileys](https://github.com/WhiskeySockets/Baileys).
-
 ## Install
 
 ```bash
@@ -128,6 +126,10 @@ curl -X POST http://localhost:3000/send/self \
 ## Requirements
 
 - Node.js >= 20.0.0
+
+## Credits
+
+Built on [Baileys](https://github.com/WhiskeySockets/Baileys).
 
 ## License
 
