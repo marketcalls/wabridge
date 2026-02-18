@@ -1,6 +1,6 @@
 # WABridge
 
-A lightweight WhatsApp HTTP Bridge. Link your WhatsApp via CLI, then send messages through a simple REST API.
+A lightweight WhatsApp HTTP Bridge. Link your WhatsApp via CLI, then send messages through a simple REST API. Supports text, images, video, audio, documents — to individuals, groups, and channels.
 
 ## Install
 
@@ -37,7 +37,7 @@ Enter your phone number and get an 8-digit pairing code. Go to WhatsApp > Linked
 Once linked, you can test messages interactively:
 
 ```
-Commands: /send, /self, /status, /disconnect, /quit
+Commands: /send, /self, /groups, /sendgroup, /sendchannel, /status, /disconnect, /quit
 ```
 
 Auth is saved to `~/.wabridge/` — you only need to link once.
@@ -66,7 +66,21 @@ curl http://localhost:3000/status
 { "status": "open", "user": "919876543210@s.whatsapp.net" }
 ```
 
-### Send Message
+### List Groups
+
+```bash
+curl http://localhost:3000/groups
+```
+
+```json
+{
+  "groups": [
+    { "id": "120363012345@g.us", "subject": "My Group", "size": 15, "desc": "Group description" }
+  ]
+}
+```
+
+### Send Text Message
 
 ```bash
 curl -X POST http://localhost:3000/send \
@@ -78,6 +92,38 @@ curl -X POST http://localhost:3000/send \
 { "success": true, "to": "919876543210" }
 ```
 
+### Send Image
+
+```bash
+curl -X POST http://localhost:3000/send \
+  -H 'Content-Type: application/json' \
+  -d '{"phone": "919876543210", "image": "https://example.com/photo.jpg", "caption": "Check this out"}'
+```
+
+### Send Video
+
+```bash
+curl -X POST http://localhost:3000/send \
+  -H 'Content-Type: application/json' \
+  -d '{"phone": "919876543210", "video": "https://example.com/video.mp4", "caption": "Watch this"}'
+```
+
+### Send Voice Note
+
+```bash
+curl -X POST http://localhost:3000/send \
+  -H 'Content-Type: application/json' \
+  -d '{"phone": "919876543210", "audio": "https://example.com/voice.ogg"}'
+```
+
+### Send Document
+
+```bash
+curl -X POST http://localhost:3000/send \
+  -H 'Content-Type: application/json' \
+  -d '{"phone": "919876543210", "document": "https://example.com/report.pdf", "mimetype": "application/pdf", "fileName": "report.pdf"}'
+```
+
 ### Send to Self
 
 ```bash
@@ -86,9 +132,33 @@ curl -X POST http://localhost:3000/send/self \
   -d '{"message": "Test alert"}'
 ```
 
-```json
-{ "success": true, "to": "self" }
+### Send to Group
+
+```bash
+curl -X POST http://localhost:3000/send/group \
+  -H 'Content-Type: application/json' \
+  -d '{"groupId": "120363012345@g.us", "message": "Hello group!"}'
 ```
+
+### Send to Channel
+
+```bash
+curl -X POST http://localhost:3000/send/channel \
+  -H 'Content-Type: application/json' \
+  -d '{"channelId": "120363098765@newsletter", "message": "Channel update"}'
+```
+
+## Message Content Fields
+
+All send endpoints (`/send`, `/send/self`, `/send/group`, `/send/channel`) accept these content fields:
+
+| Field | Type | Extra Fields | Description |
+|-------|------|-------------|-------------|
+| `message` | string | — | Text message |
+| `image` | URL | `caption?` | Image with optional caption |
+| `video` | URL | `caption?` | Video with optional caption |
+| `audio` | URL | `ptt?` (default: true) | Voice note or audio file |
+| `document` | URL | `mimetype` (required), `fileName?`, `caption?` | Document attachment |
 
 ## CLI Commands
 
@@ -105,6 +175,9 @@ curl -X POST http://localhost:3000/send/self \
 |---------|-------------|
 | `/send` | Send a message to any number |
 | `/self` | Send a message to yourself |
+| `/groups` | List all groups with JIDs |
+| `/sendgroup` | Send a message to a group |
+| `/sendchannel` | Send a message to a channel |
 | `/status` | Check connection status |
 | `/disconnect` | Unlink WhatsApp and remove saved auth |
 | `/quit` | Exit |
@@ -114,6 +187,8 @@ curl -X POST http://localhost:3000/send/self \
 - Trading alerts to WhatsApp
 - Server monitoring notifications
 - Automated reminders
+- Send media (images, videos, documents) programmatically
+- Group and channel messaging
 - Any app that needs to send WhatsApp messages via HTTP
 
 ## Configuration

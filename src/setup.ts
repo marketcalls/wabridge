@@ -1,4 +1,4 @@
-import { startSocket, sendMessage, sendToSelf, disconnect } from "./socket.js";
+import { startSocket, sendMessage, sendToSelf, sendTo, listGroups, disconnect } from "./socket.js";
 // @ts-ignore no types available
 import QRCode from "qrcode";
 import * as readline from "readline";
@@ -45,7 +45,7 @@ await startSocket({
     console.log("  WhatsApp linked successfully!\n");
     if (!promptStarted) {
       promptStarted = true;
-      console.log("  Commands: /send, /self, /status, /disconnect, /quit\n");
+      console.log("  Commands: /send, /self, /groups, /sendgroup, /sendchannel, /status, /disconnect, /quit\n");
       promptLoop();
     }
   },
@@ -101,6 +101,61 @@ async function promptLoop() {
       continue;
     }
 
+    if (input === "/groups") {
+      try {
+        const groups = await listGroups();
+        if (groups.length === 0) {
+          console.log("  No groups found.");
+        } else {
+          console.log(`  Found ${groups.length} group(s):\n`);
+          for (const g of groups) {
+            console.log(`  ${g.subject}`);
+            console.log(`    JID: ${g.id}`);
+            console.log(`    Members: ${g.size}`);
+            if (g.desc) console.log(`    Desc: ${g.desc.slice(0, 80)}`);
+            console.log("");
+          }
+        }
+      } catch (err: any) {
+        console.log(`  Failed: ${err.message}`);
+      }
+      continue;
+    }
+
+    if (input === "/sendgroup") {
+      const groupId = (await ask("  Group JID (use /groups to list): ")).trim();
+      if (!groupId || !groupId.endsWith("@g.us")) {
+        console.log("  Invalid group JID. Must end with @g.us");
+        continue;
+      }
+      const msg = (await ask("  Message: ")).trim();
+      if (!msg) { console.log("  Cancelled."); continue; }
+      try {
+        await sendTo(groupId, { type: "text", text: msg });
+        console.log("  Sent to group!");
+      } catch (err: any) {
+        console.log(`  Failed: ${err.message}`);
+      }
+      continue;
+    }
+
+    if (input === "/sendchannel") {
+      const channelId = (await ask("  Channel JID (ends with @newsletter): ")).trim();
+      if (!channelId || !channelId.endsWith("@newsletter")) {
+        console.log("  Invalid channel JID. Must end with @newsletter");
+        continue;
+      }
+      const msg = (await ask("  Message: ")).trim();
+      if (!msg) { console.log("  Cancelled."); continue; }
+      try {
+        await sendTo(channelId, { type: "text", text: msg });
+        console.log("  Sent to channel!");
+      } catch (err: any) {
+        console.log(`  Failed: ${err.message}`);
+      }
+      continue;
+    }
+
     if (input === "/disconnect") {
       const confirm = (await ask("  Unlink WhatsApp? This removes saved auth. (y/n): ")).trim().toLowerCase();
       if (confirm === "y") {
@@ -117,6 +172,6 @@ async function promptLoop() {
       continue;
     }
 
-    console.log("  Unknown. Commands: /send, /self, /status, /disconnect, /quit");
+    console.log("  Unknown. Commands: /send, /self, /groups, /sendgroup, /sendchannel, /status, /disconnect, /quit");
   }
 }

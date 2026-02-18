@@ -1,4 +1,5 @@
-import makeWASocket, { DisconnectReason, useMultiFileAuthState, makeCacheableSignalKeyStore, fetchLatestBaileysVersion } from "baileys";
+// @ts-ignore - Baileys exports differ between CJS types and ESM runtime
+import { makeWASocket, DisconnectReason, useMultiFileAuthState, makeCacheableSignalKeyStore, fetchLatestBaileysVersion } from "baileys";
 import { Boom } from "@hapi/boom";
 import pino from "pino";
 import path from "path";
@@ -14,6 +15,34 @@ export type WASocket = any;
 export interface WABridge {
   sock: WASocket;
   status: "connecting" | "open" | "disconnected";
+}
+
+export type MessageContent =
+  | { type: "text"; text: string }
+  | { type: "image"; url: string; caption?: string }
+  | { type: "video"; url: string; caption?: string }
+  | { type: "audio"; url: string; ptt?: boolean }
+  | { type: "document"; url: string; mimetype: string; fileName?: string; caption?: string };
+
+function buildBaileysContent(content: MessageContent): any {
+  switch (content.type) {
+    case "text":
+      return { text: content.text };
+    case "image":
+      return { image: { url: content.url }, caption: content.caption };
+    case "video":
+      return { video: { url: content.url }, caption: content.caption };
+    case "audio":
+      return { audio: { url: content.url }, ptt: content.ptt ?? true };
+    case "document":
+      return { document: { url: content.url }, mimetype: content.mimetype, fileName: content.fileName, caption: content.caption };
+  }
+}
+
+function resolveJid(to: string): string {
+  if (to.includes("@")) return to;
+  if (/^\d{10,15}$/.test(to)) return `${to}@s.whatsapp.net`;
+  throw new Error("Invalid recipient. Use phone number, groupId@g.us, or channelId@newsletter");
 }
 
 const bridge: WABridge = {
@@ -43,6 +72,29 @@ export async function sendToSelf(message: string) {
   if (!myJid) throw new Error("WhatsApp not connected");
   await bridge.sock.sendMessage(myJid, { text: message });
   return { success: true, to: "self" };
+}
+
+export async function sendTo(to: string, content: MessageContent) {
+  if (!bridge.sock || bridge.status !== "open") {
+    throw new Error("WhatsApp not connected");
+  }
+  const jid = resolveJid(to);
+  const msg = buildBaileysContent(content);
+  await bridge.sock.sendMessage(jid, msg);
+  return { success: true, to: jid };
+}
+
+export async function listGroups() {
+  if (!bridge.sock || bridge.status !== "open") {
+    throw new Error("WhatsApp not connected");
+  }
+  const groups = await bridge.sock.groupFetchAllParticipating();
+  return Object.values(groups).map((g: any) => ({
+    id: g.id,
+    subject: g.subject,
+    size: g.size ?? g.participants?.length ?? 0,
+    desc: g.desc || null,
+  }));
 }
 
 export async function disconnect() {

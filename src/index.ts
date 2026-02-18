@@ -21,6 +21,14 @@ Commands:
   (default)      Scan QR code and link WhatsApp
   start [port]   Start the API server (default port: 3000)
 
+API Endpoints:
+  GET  /status        Connection status
+  GET  /groups        List groups
+  POST /send          Send to phone (text, image, video, audio, document)
+  POST /send/self     Send to yourself
+  POST /send/group    Send to group
+  POST /send/channel  Send to channel/newsletter
+
 Options:
   -v, --version  Show version
   -h, --help     Show this help`);
