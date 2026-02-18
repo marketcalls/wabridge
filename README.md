@@ -95,9 +95,15 @@ curl -X POST http://localhost:3000/send \
 ### Send Image
 
 ```bash
+# From URL
 curl -X POST http://localhost:3000/send \
   -H 'Content-Type: application/json' \
   -d '{"phone": "919876543210", "image": "https://example.com/photo.jpg", "caption": "Check this out"}'
+
+# From local file path
+curl -X POST http://localhost:3000/send \
+  -H 'Content-Type: application/json' \
+  -d '{"phone": "919876543210", "image": "/path/to/photo.jpg", "caption": "Local file"}'
 ```
 
 ### Send Video
@@ -155,10 +161,12 @@ All send endpoints (`/send`, `/send/self`, `/send/group`, `/send/channel`) accep
 | Field | Type | Extra Fields | Description |
 |-------|------|-------------|-------------|
 | `message` | string | — | Text message |
-| `image` | URL | `caption?` | Image with optional caption |
-| `video` | URL | `caption?` | Video with optional caption |
-| `audio` | URL | `ptt?` (default: true) | Voice note or audio file |
-| `document` | URL | `mimetype` (required), `fileName?`, `caption?` | Document attachment |
+| `image` | URL or file path | `caption?` | Image with optional caption |
+| `video` | URL or file path | `caption?` | Video with optional caption |
+| `audio` | URL or file path | `ptt?` (default: true) | Voice note or audio file |
+| `document` | URL or file path | `mimetype` (required), `fileName?`, `caption?` | Document attachment |
+
+Media fields accept both remote URLs (`https://...`) and local file paths (`/path/to/file`).
 
 ## CLI Commands
 
